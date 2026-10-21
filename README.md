@@ -105,6 +105,14 @@ The laptop's boot menu now offers:
      on an isolated switch with no router.
   3. Set the clients to network/PXE boot. Some UEFI clients need Secure Boot
      disabled for PXE.
+- **Clonezilla Lite Server - Secure Boot clients (isolated network)**: the
+  same Lite Server, for UEFI clients that have Secure Boot **on** (e.g. HP
+  laptops that say "the selected boot image did not authenticate").
+  - Lite Server normally offers UEFI clients an unsigned boot loader.
+  - This entry swaps in Clonezilla's signed shim and GRUB instead.
+  - Choose **start a new DHCP service** on an isolated switch. With your
+    router's DHCP (proxy mode) the signed GRUB may not find the server.
+  - The helper logs to `/tmp/czhd-secureboot.log`.
 - **Import images from a USB drive**: copies premade Clonezilla images from
   a USB drive onto `CZIMAGES`, then checks they're restorable.
   1. Pick the entry, plug in the drive when asked, and press Enter.
@@ -143,4 +151,5 @@ shellcheck -x make-usb.sh czhd/*.sh
 | `make-usb.sh` | any Linux PC | builds the installer USB stick (or `.img`) |
 | `czhd/install-to-hd.sh` | the laptop, inside Clonezilla Live | partitions the drive and installs Clonezilla |
 | `czhd/import-images.sh` | the laptop, inside Clonezilla Live | copies premade images from a USB drive onto CZIMAGES |
+| `czhd/lite-secureboot.sh` | the laptop, inside Clonezilla Live | serves signed UEFI boot files from Lite Server |
 | `czhd/menu-lib.sh` | both | edits Clonezilla's syslinux and GRUB menus |

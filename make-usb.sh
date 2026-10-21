@@ -188,7 +188,7 @@ MNT=$(mktemp -d)
 mount "$P1" "$MNT"
 unzip -qq "$ZIP" -d "$MNT"
 mkdir -p "$MNT/czhd"
-cp "$HERE/czhd/install-to-hd.sh" "$HERE/czhd/import-images.sh" "$HERE/czhd/menu-lib.sh" "$MNT/czhd/"
+cp "$HERE/czhd/install-to-hd.sh" "$HERE/czhd/import-images.sh" "$HERE/czhd/lite-secureboot.sh" "$HERE/czhd/menu-lib.sh" "$MNT/czhd/"
 {
   echo "# Written by make-usb.sh; read by install-to-hd.sh."
   printf 'BOOT_SIZE=%q\nAUTO=%q\nDEFAULT_ENTRY=%q\nMENU_TIMEOUT=%q\nCZ_LOCALE=%q\nCZ_KEYMAP=%q\n' \
