@@ -66,10 +66,19 @@ writes it to the stick, and adds the installer boot entry. To build a
 
 ### Only have Windows?
 
-1. Make a normal Clonezilla Live USB with Rufus, as clonezilla.org describes.
-2. Copy this repo's `czhd` folder to the root of the stick.
-3. Boot the laptop from it and choose **Clonezilla live**, then **Enter_shell** (command line).
-4. Run `sudo bash /run/live/medium/czhd/install-to-hd.sh`.
+1. Download the Clonezilla Live **zip** (amd64, stable) from clonezilla.org.
+2. Format the USB stick as **FAT32**. Windows only offers FAT32 for sticks
+   up to 32 GB; for a bigger stick, use Rufus with "Non bootable" and FAT32.
+3. Extract the zip's contents to the root of the stick, so `live\`, `EFI\`
+   and `utils\` sit directly on it.
+4. On the stick, open `utils\win64`, right-click `makeboot64.bat`, choose
+   **Run as administrator** and follow its prompts. Check that it names the
+   USB stick's drive letter.
+5. Copy this repo's `czhd` folder to the root of the stick. Don't edit the
+   `.sh` files in Notepad: Windows line endings break them.
+6. Boot the laptop from the stick. Choose **Clonezilla live**, pick your
+   language and keyboard, then **Enter_shell**, then **cmd**.
+7. Run `sudo bash /run/live/medium/czhd/install-to-hd.sh`.
 
 The result is the same; you just don't get the extra boot entry or `--auto`.
 
