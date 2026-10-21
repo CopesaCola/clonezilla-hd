@@ -1,4 +1,4 @@
-# clonezilla-pxe-server
+# clonezilla-hd
 
 Automates [Clonezilla Live on hard drive](https://clonezilla.org/livehd.php)
 from a USB stick. A laptop boots straight into Clonezilla from its own drive,
@@ -44,8 +44,8 @@ instead: it replaces Clonezilla on `CZBOOT` and keeps your images on
 ## 1. Make the USB stick (on any Linux PC)
 
 ```bash
-git clone https://github.com/<you>/clonezilla-pxe-server.git
-cd clonezilla-pxe-server
+git clone https://github.com/CopesaCola/clonezilla-hd.git
+cd clonezilla-hd
 lsblk -d -o NAME,SIZE,TRAN,MODEL           # find the USB stick, e.g. /dev/sdb
 sudo ./make-usb.sh /dev/sdb
 ```
