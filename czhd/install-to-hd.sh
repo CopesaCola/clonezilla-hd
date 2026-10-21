@@ -128,20 +128,36 @@ if ((!UPGRADE)); then
   # Attribute bit 2 = "legacy BIOS bootable", which gptmbr.bin looks for.
   sgdisk -n1:0:+"$BOOT_SIZE" -t1:ef00 -c1:CZBOOT -A1:set:2 \
     -n2:0:0 -t2:8300 -c2:CZIMAGES "$DISK" >/dev/null
-  partprobe "$DISK" || true
-  udevadm settle
-  for _ in {1..10}; do [[ -b $P1 && -b $P2 ]] && break; sleep 1; done
-  [[ -b $P1 && -b $P2 ]] || die "new partitions did not appear"
+  # Make sure the kernel uses the new table; the old partitions' device nodes
+  # still exist, so their presence alone proves nothing.
+  want=$(sgdisk -i 1 "$DISK" | awk '/^First sector:/ {print $3}')
+  for _ in {1..10}; do
+    partprobe "$DISK" 2>/dev/null || blockdev --rereadpt "$DISK" 2>/dev/null || partx -u "$DISK" 2>/dev/null || true
+    udevadm settle
+    [[ -b $P1 && -b $P2 && $(cat "/sys/class/block/${P1##*/}/start" 2>/dev/null) == "$want" ]] && break
+    sleep 1
+  done
+  [[ $(cat "/sys/class/block/${P1##*/}/start" 2>/dev/null) == "$want" ]] ||
+    die "the kernel is still using the old partition table; reboot from the USB stick and run the installer again"
   say "Formatting"
+  wipefs -a -f "$P2" >/dev/null
   mkfs.ext4 -q -F -m 0 -L CZIMAGES "$P2"
 fi
+wipefs -a -f "$P1" >/dev/null
 mkfs.vfat -F 32 -n CZBOOT "$P1" >/dev/null
+udevadm settle
 
 # --- copy Clonezilla Live ----------------------------------------------------------------
 
 say "Copying Clonezilla Live to $P1"
 mkdir -p "$TARGET_MNT"
-mount "$P1" "$TARGET_MNT"
+modprobe -a -q vfat nls_cp437 nls_iso8859_1 nls_utf8 2>/dev/null || true
+if ! mount -t vfat "$P1" "$TARGET_MNT" && ! mount -t vfat -o iocharset=iso8859-1 "$P1" "$TARGET_MNT"; then
+  echo "--- kernel log ---"
+  dmesg | tail -n 15
+  blkid -p "$P1" || true
+  die "could not mount the new FAT32 partition $P1 (details above)"
+fi
 rsync -rt --exclude=/czhd "$SRC/" "$TARGET_MNT/"
 # Use /live-hd (not /live) so the hard-drive copy never gets confused with a
 # Clonezilla USB stick plugged in at the same time.
