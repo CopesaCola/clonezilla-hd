@@ -11,7 +11,7 @@ Server** to PXE-boot other computers and deploy images to them.
  │ Clonezilla Live          │  ───► │ CZBOOT   │ CZIMAGES                  │
  │ + "Install Clonezilla to │       │ 2 GiB    │ rest of the drive, ext4   │
  │   this computer's HARD   │       │ FAT32/EFI│ = /home/partimag          │
- │   DRIVE" boot entry      │       │ /live-hd │   (your images)           │
+ │   DRIVE" boot entry      │       │ /live    │   (your images)           │
  └──────────────────────────┘       └──────────┴───────────────────────────┘
 ```
 
@@ -23,11 +23,11 @@ These are the steps from clonezilla.org/livehd.php, scripted:
    offered. If there's more than one internal drive, it asks which one.
 2. Partitions it (GPT):
    - `CZBOOT`: a 2 GiB FAT32 EFI partition holding Clonezilla Live in
-     `/live-hd`. The folder is renamed from `/live` so the copy on the drive
-     isn't confused with a Clonezilla USB stick that's also plugged in.
+     `/live`. livehd.php renames it to `/live-hd`, but Lite Server only works
+     with `/live`, so keep other Clonezilla USB sticks unplugged when you
+     boot the laptop.
    - `CZIMAGES`: ext4, the rest of the drive, for images.
 3. Rewrites Clonezilla's boot menus for the hard drive:
-   - adds `live-media-path=/live-hd`.
    - adds `ocs_repository="dev:///LABEL=CZIMAGES"`, so the images partition
      is already mounted as `/home/partimag` when Clonezilla starts.
    - adds a **Clonezilla Lite Server (PXE-boot other computers)** entry.

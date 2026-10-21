@@ -6,7 +6,7 @@
 # It automates https://clonezilla.org/livehd.php:
 #
 #   partition 1  CZBOOT    FAT32 EFI system partition holding Clonezilla Live
-#                          (in /live-hd), bootable from UEFI and legacy BIOS
+#                          (in /live), bootable from UEFI and legacy BIOS
 #   partition 2  CZIMAGES  ext4, the rest of the drive, for disk images
 #
 # If the drive already has that layout, only CZBOOT is rewritten and the
@@ -162,23 +162,21 @@ rsync -rt --exclude=/czhd "$SRC/" "$TARGET_MNT/"
 # The laptop gets the image import tool, not the installer.
 mkdir -p "$TARGET_MNT/czhd"
 cp "$HERE/import-images.sh" "$HERE/lite-secureboot.sh" "$TARGET_MNT/czhd/"
-# Use /live-hd (not /live) so the hard-drive copy never gets confused with a
-# Clonezilla USB stick plugged in at the same time.
-mv "$TARGET_MNT/live" "$TARGET_MNT/live-hd"
+# Clonezilla stays in /live, not /live-hd as on clonezilla.org/livehd.php:
+# Lite Server hard-codes <boot media>/live/ when it builds the client boot menu.
 
 say "Writing boot menus"
 remove_entries "$TARGET_MNT"
 for f in $(menu_files "$TARGET_MNT"); do
-  sed -i -E -e 's#/live/#/live-hd/#g' -e 's#toram=live,#toram=live-hd,#g' \
-    -e '/boot=live/s#boot=live #boot=live live-media-path=/live-hd ocs_repository="dev:///LABEL=CZIMAGES" #' "$f"
+  sed -i -E '/boot=live/s#boot=live #boot=live ocs_repository="dev:///LABEL=CZIMAGES" #' "$f"
 done
 params=$(base_params "$TARGET_MNT")
 # add_entry puts each new entry at the top, so add them bottom-up.
-add_entry "$TARGET_MNT" czhd-import "Import images from a USB drive" live-hd /live-hd/vmlinuz \
+add_entry "$TARGET_MNT" czhd-import "Import images from a USB drive" live /live/vmlinuz \
   "$params ocs_live_run=\"bash /run/live/medium/czhd/import-images.sh\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 # lite-secureboot.sh makes Lite Server hand UEFI clients signed boot files,
 # so clients with Secure Boot on can network-boot too.
-add_entry "$TARGET_MNT" czhd-lite "Clonezilla Lite Server (PXE-boot other computers)" live-hd /live-hd/vmlinuz \
+add_entry "$TARGET_MNT" czhd-lite "Clonezilla Lite Server (PXE-boot other computers)" live /live/vmlinuz \
   "$params ocs_prerun=\"bash /run/live/medium/czhd/lite-secureboot.sh\" ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 if [[ $DEFAULT_ENTRY == lite-server ]]; then set_default "$TARGET_MNT" czhd-lite; else set_default "$TARGET_MNT" clonezilla; fi
 set_timeout "$TARGET_MNT" "$MENU_TIMEOUT"
