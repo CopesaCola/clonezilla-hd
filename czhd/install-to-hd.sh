@@ -161,7 +161,7 @@ fi
 rsync -rt --exclude=/czhd "$SRC/" "$TARGET_MNT/"
 # The laptop gets the image import tool, not the installer.
 mkdir -p "$TARGET_MNT/czhd"
-cp "$HERE/import-images.sh" "$HERE/lite-secureboot.sh" "$TARGET_MNT/czhd/"
+cp "$HERE/import-images.sh" "$HERE/lite-server-helper.sh" "$TARGET_MNT/czhd/"
 # Clonezilla stays in /live, not /live-hd as on clonezilla.org/livehd.php:
 # Lite Server hard-codes <boot media>/live/ when it builds the client boot menu.
 
@@ -174,10 +174,10 @@ params=$(base_params "$TARGET_MNT")
 # add_entry puts each new entry at the top, so add them bottom-up.
 add_entry "$TARGET_MNT" czhd-import "Import images from a USB drive" live /live/vmlinuz \
   "$params ocs_live_run=\"bash /run/live/medium/czhd/import-images.sh\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
-# lite-secureboot.sh makes Lite Server hand UEFI clients signed boot files,
-# so clients with Secure Boot on can network-boot too.
+# lite-server-helper.sh makes Lite Server hand UEFI clients signed boot files
+# (so Secure Boot can stay on) and keeps this laptop's settings off the clients.
 add_entry "$TARGET_MNT" czhd-lite "Clonezilla Lite Server (PXE-boot other computers)" live /live/vmlinuz \
-  "$params ocs_prerun=\"bash /run/live/medium/czhd/lite-secureboot.sh\" ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
+  "$params ocs_prerun=\"bash /run/live/medium/czhd/lite-server-helper.sh\" ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 if [[ $DEFAULT_ENTRY == lite-server ]]; then set_default "$TARGET_MNT" czhd-lite; else set_default "$TARGET_MNT" clonezilla; fi
 set_timeout "$TARGET_MNT" "$MENU_TIMEOUT"
 set_lang "$TARGET_MNT" "$CZ_LOCALE" "$CZ_KEYMAP"
