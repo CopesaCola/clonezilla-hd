@@ -105,7 +105,16 @@ The laptop's boot menu now offers:
      on an isolated switch with no router.
   3. Set the clients to network/PXE boot. Some UEFI clients need Secure Boot
      disabled for PXE.
-- **Getting images onto `CZIMAGES`**: Lite Server only sends images out. To
+- **Import images from a USB drive**: copies premade Clonezilla images from
+  a USB drive onto `CZIMAGES`, then checks they're restorable.
+  1. Pick the entry, plug in the drive when asked, and press Enter.
+  2. Choose which of the listed images to copy (or `all`).
+
+  The drive is mounted read-only. Images are found up to 3 folders deep,
+  spaces in names become `_`, and a half-finished copy never shows up as an
+  image. From a Clonezilla shell you can also run
+  `sudo bash /run/live/medium/czhd/import-images.sh [/dev/sdXN]`.
+- **Capturing new images**: Lite Server only sends images out. To
   capture a machine's disk, either:
   - connect that disk to the laptop (USB enclosure or dock) and use
     *Clonezilla live → device-image → savedisk*, or
@@ -126,11 +135,12 @@ The laptop's boot menu now offers:
 ## Development
 
 ```bash
-shellcheck -x make-usb.sh czhd/install-to-hd.sh czhd/menu-lib.sh
+shellcheck -x make-usb.sh czhd/*.sh
 ```
 
 | File | Runs on | Purpose |
 |---|---|---|
 | `make-usb.sh` | any Linux PC | builds the installer USB stick (or `.img`) |
 | `czhd/install-to-hd.sh` | the laptop, inside Clonezilla Live | partitions the drive and installs Clonezilla |
+| `czhd/import-images.sh` | the laptop, inside Clonezilla Live | copies premade images from a USB drive onto CZIMAGES |
 | `czhd/menu-lib.sh` | both | edits Clonezilla's syslinux and GRUB menus |

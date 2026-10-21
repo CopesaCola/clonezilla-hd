@@ -159,6 +159,9 @@ if ! mount -t vfat "$P1" "$TARGET_MNT" && ! mount -t vfat -o iocharset=iso8859-1
   die "could not mount the new FAT32 partition $P1 (details above)"
 fi
 rsync -rt --exclude=/czhd "$SRC/" "$TARGET_MNT/"
+# The laptop gets the image import tool, not the installer.
+mkdir -p "$TARGET_MNT/czhd"
+cp "$HERE/import-images.sh" "$TARGET_MNT/czhd/"
 # Use /live-hd (not /live) so the hard-drive copy never gets confused with a
 # Clonezilla USB stick plugged in at the same time.
 mv "$TARGET_MNT/live" "$TARGET_MNT/live-hd"
@@ -170,6 +173,9 @@ for f in $(menu_files "$TARGET_MNT"); do
     -e '/boot=live/s#boot=live #boot=live live-media-path=/live-hd ocs_repository="dev:///LABEL=CZIMAGES" #' "$f"
 done
 params=$(base_params "$TARGET_MNT")
+# add_entry puts each new entry at the top, so add them bottom-up.
+add_entry "$TARGET_MNT" czhd-import "Import images from a USB drive" live-hd /live-hd/vmlinuz \
+  "$params ocs_live_run=\"bash /run/live/medium/czhd/import-images.sh\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 add_entry "$TARGET_MNT" czhd-lite "Clonezilla Lite Server (PXE-boot other computers)" live-hd /live-hd/vmlinuz \
   "$params ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 if [[ $DEFAULT_ENTRY == lite-server ]]; then set_default "$TARGET_MNT" czhd-lite; else set_default "$TARGET_MNT" clonezilla; fi
@@ -212,6 +218,8 @@ cat <<EOF
      - Clonezilla live: images are saved to/restored from CZIMAGES
      - Clonezilla Lite Server: PXE-boot other computers on the
        network and deploy images from CZIMAGES to them
+     - Import images from a USB drive: copy premade images
+       onto CZIMAGES and check them
  ===========================================================
 
 EOF

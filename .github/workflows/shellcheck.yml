@@ -10,4 +10,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run shellcheck
-        run: shellcheck -x make-usb.sh czhd/install-to-hd.sh czhd/menu-lib.sh
+        run: shellcheck -x make-usb.sh czhd/*.sh
