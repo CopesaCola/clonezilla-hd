@@ -14,7 +14,10 @@
 #    boot menu, including ocs_repository="dev:///LABEL=CZIMAGES". On a client
 #    that makes Clonezilla look for a CZIMAGES partition it doesn't have, so
 #    strip it from the client menus.
-# 3. Full-duplex multicast (see below).
+# 3. Full-duplex multicast, and shorter waits: the client boot menu counts
+#    down CLIENT_MENU_TIMEOUT seconds instead of 7, and multicast waits
+#    PART_PREPARE_TIME seconds before each partition after the first instead
+#    of 30 (see below).
 #
 # Started from the laptop's "Clonezilla Lite Server" boot entry through
 # ocs_prerun, before Lite Server runs. It forks the watcher and returns.
@@ -23,6 +26,8 @@ set -euo pipefail
 NBI=/tftpboot/nbi_img
 LOG=/tmp/czhd-lite-server.log
 DRBL_OCS_CONF=/etc/drbl/drbl-ocs.conf
+CLIENT_MENU_TIMEOUT=2     # seconds; Lite Server's default is 7
+PART_PREPARE_TIME=10      # seconds; Lite Server's default is 30
 
 if [[ ${1-} != --watch ]]; then
   # 3. Full-duplex multicast: udp-sender otherwise assumes a hub and pauses
@@ -36,6 +41,14 @@ if [[ ${1-} != --watch ]]; then
       echo 'udp_sender_extra_opt_default="--full-duplex"' >>"$DRBL_OCS_CONF"
     fi
     echo "$(date '+%F %T') enabled full-duplex multicast in $DRBL_OCS_CONF" >>"$LOG"
+  fi
+  # Wait before each partition after the first, in "time to wait" multicast
+  # mode: long enough for every client to finish the previous partition and
+  # reconnect. ("Clients to wait" mode waits for all clients instead.)
+  if [[ -w $DRBL_OCS_CONF ]] && ! grep -q "^PART_PREPARE_TIME=\"$PART_PREPARE_TIME\"" "$DRBL_OCS_CONF"; then
+    sed -i -E "/^PART_PREPARE_TIME=/d" "$DRBL_OCS_CONF"
+    echo "PART_PREPARE_TIME=\"$PART_PREPARE_TIME\"" >>"$DRBL_OCS_CONF"
+    echo "$(date '+%F %T') set PART_PREPARE_TIME=$PART_PREPARE_TIME in $DRBL_OCS_CONF" >>"$LOG"
   fi
   setsid nohup bash "$0" --watch >>"$LOG" 2>&1 </dev/null &
   echo "Lite Server helper started (log: $LOG)"
@@ -62,5 +75,17 @@ while :; do
     sed -i -E 's/[[:space:]]ocs_repository=(\\?"[^"\\]*\\?"|[^[:space:]]+)//g' "$f"
     log "removed ocs_repository from $f"
   done
+
+  # Client boot menu countdown (GRUB in seconds, pxelinux in tenths).
+  f=$NBI/grub/grub.cfg
+  if [[ -f $f ]] && grep -Eq "^set timeout=([0-9]+)$" "$f" && ! grep -q "^set timeout=$CLIENT_MENU_TIMEOUT$" "$f"; then
+    sed -i -E "s/^set timeout=[0-9]+$/set timeout=$CLIENT_MENU_TIMEOUT/" "$f"
+    log "client GRUB menu timeout set to ${CLIENT_MENU_TIMEOUT}s"
+  fi
+  f=$NBI/pxelinux.cfg/default
+  if [[ -f $f ]] && grep -Eq "^timeout [0-9]+" "$f" && ! grep -q "^timeout $((CLIENT_MENU_TIMEOUT * 10))$" "$f"; then
+    sed -i -E "s/^timeout [0-9]+/timeout $((CLIENT_MENU_TIMEOUT * 10))/" "$f"
+    log "client pxelinux menu timeout set to ${CLIENT_MENU_TIMEOUT}s"
+  fi
   sleep 2
 done
