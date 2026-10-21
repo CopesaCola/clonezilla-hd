@@ -103,16 +103,11 @@ The laptop's boot menu now offers:
      `CZIMAGES` partition, on the laptop's drive). It also asks whether to
      use an existing DHCP server or start its own: choose "start new" only
      on an isolated switch with no router.
-  3. Set the clients to network/PXE boot. Some UEFI clients need Secure Boot
-     disabled for PXE.
-- **Clonezilla Lite Server - Secure Boot clients (isolated network)**: the
-  same Lite Server, for UEFI clients that have Secure Boot **on** (e.g. HP
-  laptops that say "the selected boot image did not authenticate").
-  - Lite Server normally offers UEFI clients an unsigned boot loader.
-  - This entry swaps in Clonezilla's signed shim and GRUB instead.
-  - Choose **start a new DHCP service** on an isolated switch. With your
-    router's DHCP (proxy mode) the signed GRUB may not find the server.
-  - The helper logs to `/tmp/czhd-secureboot.log`.
+  3. Set the clients to network/PXE boot. Secure Boot can stay on: Lite
+     Server normally offers UEFI clients an unsigned boot loader, so this
+     entry swaps in Clonezilla's signed shim and GRUB (`czhd/lite-secureboot.sh`,
+     log in `/tmp/czhd-secureboot.log`). Signed network boot works best when
+     Lite Server starts its own DHCP on an isolated switch.
 - **Import images from a USB drive**: copies premade Clonezilla images from
   a USB drive onto `CZIMAGES`, then checks they're restorable.
   1. Pick the entry, plug in the drive when asked, and press Enter.

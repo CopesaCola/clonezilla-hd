@@ -176,10 +176,10 @@ params=$(base_params "$TARGET_MNT")
 # add_entry puts each new entry at the top, so add them bottom-up.
 add_entry "$TARGET_MNT" czhd-import "Import images from a USB drive" live-hd /live-hd/vmlinuz \
   "$params ocs_live_run=\"bash /run/live/medium/czhd/import-images.sh\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
-add_entry "$TARGET_MNT" czhd-lite-sb "Clonezilla Lite Server - Secure Boot clients (isolated network)" live-hd /live-hd/vmlinuz \
-  "$params ocs_prerun=\"bash /run/live/medium/czhd/lite-secureboot.sh\" ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
+# lite-secureboot.sh makes Lite Server hand UEFI clients signed boot files,
+# so clients with Secure Boot on can network-boot too.
 add_entry "$TARGET_MNT" czhd-lite "Clonezilla Lite Server (PXE-boot other computers)" live-hd /live-hd/vmlinuz \
-  "$params ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
+  "$params ocs_prerun=\"bash /run/live/medium/czhd/lite-secureboot.sh\" ocs_live_run=\"ocs-live-feed-img\" ocs_live_extra_param=\"\" ocs_live_batch=\"no\""
 if [[ $DEFAULT_ENTRY == lite-server ]]; then set_default "$TARGET_MNT" czhd-lite; else set_default "$TARGET_MNT" clonezilla; fi
 set_timeout "$TARGET_MNT" "$MENU_TIMEOUT"
 set_lang "$TARGET_MNT" "$CZ_LOCALE" "$CZ_KEYMAP"
@@ -219,9 +219,7 @@ cat <<EOF
    Boot menu on the hard drive:
      - Clonezilla live: images are saved to/restored from CZIMAGES
      - Clonezilla Lite Server: PXE-boot other computers on the
-       network and deploy images from CZIMAGES to them
-     - Clonezilla Lite Server - Secure Boot clients: same, for
-       UEFI clients with Secure Boot ON (best on an isolated switch)
+       network (Secure Boot on or off) and deploy images to them
      - Import images from a USB drive: copy premade images
        onto CZIMAGES and check them
  ===========================================================

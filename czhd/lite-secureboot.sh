@@ -8,7 +8,7 @@
 # signed shim in place of bootx64.efi; shim then loads the signed grubx64.efi
 # from the same server. Clients with Secure Boot off still boot fine.
 #
-# Started from the "Lite Server (Secure Boot clients)" boot entry through
+# Started from the laptop's "Clonezilla Lite Server" boot entry through
 # ocs_prerun, before Lite Server runs. It forks a watcher and returns, because
 # Lite Server regenerates the boot files when it starts.
 set -euo pipefail
