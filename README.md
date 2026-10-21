@@ -108,6 +108,9 @@ The laptop's boot menu now offers:
      entry swaps in Clonezilla's signed shim and GRUB (`czhd/lite-server-helper.sh`,
      log in `/tmp/czhd-lite-server.log`). Signed network boot works best when
      Lite Server starts its own DHCP on an isolated switch.
+  4. Multicast runs in full-duplex mode (the wizard's `-x` option) by
+     default, which is faster with several clients. It needs a switch, not
+     an old network hub.
 - **Import images from a USB drive**: copies premade Clonezilla images from
   a USB drive onto `CZIMAGES`, then checks they're restorable.
   1. Pick the entry, plug in the drive when asked, and press Enter.
