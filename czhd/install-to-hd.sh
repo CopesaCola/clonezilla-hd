@@ -142,7 +142,7 @@ Nothing was changed. Reboot from the USB stick using the \"To RAM\" entry and tr
 
 if ((!UPGRADE)); then
   say "Partitioning $DISK"
-  wipefs -a -f "$DISK" >/dev/null
+  wipefs -a "$DISK" >/dev/null
   sgdisk --zap-all "$DISK" >/dev/null
   # Attribute bit 2 = "legacy BIOS bootable", which gptmbr.bin looks for.
   sgdisk -n1:0:+"$BOOT_SIZE" -t1:ef00 -c1:CZBOOT -A1:set:2 \
@@ -159,10 +159,10 @@ if ((!UPGRADE)); then
   [[ $(cat "/sys/class/block/${P1##*/}/start" 2>/dev/null) == "$want" ]] ||
     die "the kernel is still using the old partition table; reboot from the USB stick and run the installer again"
   say "Formatting"
-  wipefs -a -f "$P2" >/dev/null
+  wipefs -a "$P2" >/dev/null    # no -f: refuse rather than touch a mounted filesystem
   mkfs.ext4 -q -F -m 0 -L CZIMAGES "$P2"
 fi
-if ((!UPGRADE)); then wipefs -a -f "$P1" >/dev/null; fi
+if ((!UPGRADE)); then wipefs -a "$P1" >/dev/null; fi
 mkfs.vfat -F 32 -n CZBOOT "$P1" >/dev/null
 udevadm settle
 
