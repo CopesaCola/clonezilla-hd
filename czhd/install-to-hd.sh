@@ -102,9 +102,10 @@ Reboot from the USB stick, pick \"Clonezilla live (VGA 800x600 & To RAM)\", then
 fi
 
 # Upgrade mode: our layout is already there, keep the images partition.
+# Upgrade mode: our images partition is already there, so keep it. Only the
+# images partition decides this: a damaged CZBOOT is simply rewritten.
 UPGRADE=0
-if [[ -b $P1 && -b $P2 && $(blkid -s LABEL -o value "$P1" 2>/dev/null) == CZBOOT &&
-  $(blkid -s LABEL -o value "$P2" 2>/dev/null) == CZIMAGES ]]; then
+if [[ -b $P1 && -b $P2 && $(blkid -s LABEL -o value "$P2" 2>/dev/null) == CZIMAGES ]]; then
   UPGRADE=1
 fi
 
@@ -132,6 +133,12 @@ fi
 
 for p in $(lsblk -n -p -o NAME "$DISK" | tail -n +2); do umount "$p" 2>/dev/null || true; done
 swapoff -a 2>/dev/null || true
+# Stop before changing anything if a partition we're about to rewrite is
+# still in use, rather than half-way through.
+busy=$(lsblk -n -p -o NAME,MOUNTPOINTS "$DISK" | awk 'NR > 1 && NF > 1 {print $1}' | sed 's/^[^/]*//')
+if ((UPGRADE)); then busy=$(grep -x "$P1" <<<"$busy" || true); fi
+[[ -z $busy ]] || die "these partitions are still in use and could not be unmounted: ${busy//$'\n'/ }
+Nothing was changed. Reboot from the USB stick using the \"To RAM\" entry and try again."
 
 if ((!UPGRADE)); then
   say "Partitioning $DISK"
@@ -155,7 +162,7 @@ if ((!UPGRADE)); then
   wipefs -a -f "$P2" >/dev/null
   mkfs.ext4 -q -F -m 0 -L CZIMAGES "$P2"
 fi
-wipefs -a -f "$P1" >/dev/null
+if ((!UPGRADE)); then wipefs -a -f "$P1" >/dev/null; fi
 mkfs.vfat -F 32 -n CZBOOT "$P1" >/dev/null
 udevadm settle
 
