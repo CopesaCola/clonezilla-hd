@@ -112,8 +112,10 @@ The laptop's boot menu now offers:
      default, which is faster with several clients. It needs a switch, not
      an old network hub.
   5. Waits are shortened: the clients' boot menu starts the restore after
-     2 s (Lite Server default 7 s), and in "time to wait" mode multicast
-     waits 10 s before each partition after the first (default 30 s). Both
+     2 s (Lite Server default 7 s), each client's "Preparing the next..."
+     countdown between partitions is 3-5 s (default 3-18 s), and in "time
+     to wait" mode multicast waits 10 s before each partition after the
+     first (default 30 s). All
      are set at the top of `czhd/lite-server-helper.sh`. Choosing
      **clients-to-wait** in the wizard skips the per-partition wait
      entirely: each partition starts as soon as every client is ready.

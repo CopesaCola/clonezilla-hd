@@ -15,9 +15,10 @@
 #    that makes Clonezilla look for a CZIMAGES partition it doesn't have, so
 #    strip it from the client menus.
 # 3. Full-duplex multicast, and shorter waits: the client boot menu counts
-#    down CLIENT_MENU_TIMEOUT seconds instead of 7, and multicast waits
+#    down CLIENT_MENU_TIMEOUT seconds instead of 7, the server waits
 #    PART_PREPARE_TIME seconds before each partition after the first instead
-#    of 30 (see below).
+#    of 30, and each client waits 3 s plus a random 0-CLIENT_PART_WAIT s
+#    ("Preparing the next...") instead of 3 s plus 0-15 s (see below).
 #
 # Started from the laptop's "Clonezilla Lite Server" boot entry through
 # ocs_prerun, before Lite Server runs. It forks the watcher and returns.
@@ -28,6 +29,7 @@ LOG=/tmp/czhd-lite-server.log
 DRBL_OCS_CONF=/etc/drbl/drbl-ocs.conf
 CLIENT_MENU_TIMEOUT=2     # seconds; Lite Server's default is 7
 PART_PREPARE_TIME=10      # seconds; Lite Server's default is 30
+CLIENT_PART_WAIT=2        # seconds; Clonezilla's default is 15
 
 if [[ ${1-} != --watch ]]; then
   # 3. Full-duplex multicast: udp-sender otherwise assumes a hub and pauses
@@ -74,6 +76,17 @@ while :; do
     # Handles both ocs_repository="..." and GRUB-escaped ocs_repository=\"...\".
     sed -i -E 's/[[:space:]]ocs_repository=(\\?"[^"\\]*\\?"|[^[:space:]]+)//g' "$f"
     log "removed ocs_repository from $f"
+  done
+
+  # Client wait between partitions: a client sleeps 3 s plus a random
+  # 0-SLEEP_TIME_AFTER_PART_CLONED s so clients don't all reconnect at once.
+  # Lower it with a startup command on the client's boot entry; a later
+  # assignment in drbl-ocs.conf wins when Clonezilla reads it.
+  prerun="ocs_prerun1=\"echo SLEEP_TIME_AFTER_PART_CLONED=$CLIENT_PART_WAIT >> /etc/drbl/drbl-ocs.conf\""
+  for f in "$NBI"/grub/grub.cfg* "$NBI"/pxelinux.cfg/*; do
+    if [[ ! -f $f ]] || ! grep -q 'ocs-live-get-img' "$f" || grep -q 'SLEEP_TIME_AFTER_PART_CLONED' "$f"; then continue; fi
+    sed -i -E "/ocs-live-get-img/s|[[:space:]]*\$| ${prerun//\//\\/}|" "$f"
+    log "client wait between partitions set to 3-$((3 + CLIENT_PART_WAIT))s in $f"
   done
 
   # Client boot menu countdown (GRUB in seconds, pxelinux in tenths).
