@@ -149,10 +149,17 @@ everything from the server when they network-boot.
      `sudo ./make-usb.sh /dev/sdX` from an updated checkout.
    - To also move to a newer Clonezilla, rebuild the stick with that
      version, either with `make-usb.sh` or the Windows steps above.
-3. **Boot the server from the stick.** Choose **Clonezilla live**, pick
-   your language and keyboard, then **Enter_shell → cmd**, and run:
+3. **Boot the server from the stick.** Choose **Clonezilla live (VGA
+   800x600 & To RAM)**. "To RAM" matters here: the stick and the server look
+   alike, so Clonezilla may start from the server's own drive, and To RAM
+   releases that drive so it can be rewritten. Pick your language and
+   keyboard, then **Enter_shell → cmd**. Find the stick (the disk marked
+   `usb`), mount it and run the installer from it:
    ```
-   sudo bash /run/live/medium/czhd/install-to-hd.sh
+   lsblk -o NAME,SIZE,LABEL,TRAN
+   sudo mkdir -p /mnt/usb
+   sudo mount /dev/sdb1 /mnt/usb       # use the stick's partition from lsblk
+   sudo bash /mnt/usb/czhd/install-to-hd.sh
    ```
 4. **Type `UPGRADE`** when it says Clonezilla is already installed. Don't
    type `YES` or `ERASE`: those wipe the drive, images included.

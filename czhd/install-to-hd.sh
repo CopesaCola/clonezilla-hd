@@ -89,6 +89,18 @@ fi
 P1=$(part "$DISK" 1)
 P2=$(part "$DISK" 2)
 
+# The running Clonezilla must not be using the target drive. The stick and an
+# installed server look alike, so a server booted "from the stick" can end up
+# running from its own CZBOOT partition, which then can't be rewritten.
+live_src=$(findmnt -n -o SOURCE /run/live/medium 2>/dev/null || true)
+if [[ -n $live_src && $(lsblk -n -p -o PKNAME "$live_src" 2>/dev/null | head -n1) == "$DISK" ]]; then
+  die "Clonezilla is running from $live_src on $DISK, the drive being installed to, so it can't be rewritten.
+Reboot from the USB stick, pick \"Clonezilla live (VGA 800x600 & To RAM)\", then Enter_shell -> cmd and run:
+  lsblk -o NAME,SIZE,LABEL,TRAN          # the stick is the disk marked usb, e.g. sdb with partition sdb1
+  sudo mkdir -p /mnt/usb && sudo mount /dev/sdb1 /mnt/usb
+  sudo bash /mnt/usb/czhd/install-to-hd.sh"
+fi
+
 # Upgrade mode: our layout is already there, keep the images partition.
 UPGRADE=0
 if [[ -b $P1 && -b $P2 && $(blkid -s LABEL -o value "$P1" 2>/dev/null) == CZBOOT &&
