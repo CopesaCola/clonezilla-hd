@@ -133,6 +133,39 @@ The laptop's boot menu now offers:
   - save on the client with the regular stick, then copy the image folder to
     the laptop's `/home/partimag`.
 
+## 4. Update the server
+
+Use this to pick up a newer version of these scripts or a newer
+Clonezilla. The server is the laptop running Clonezilla; the clients are
+the computers being imaged. The upgrade replaces Clonezilla on `CZBOOT`
+and **keeps every image on `CZIMAGES`**. Clients need no changes: they get
+everything from the server when they network-boot.
+
+1. **Get the latest `czhd` folder.** On GitHub, click **Code → Download
+   ZIP** and extract it.
+2. **Update the USB stick.** Delete the old `czhd` folder from the stick and
+   copy the new one to the top level of the stick.
+   - Made the stick with `make-usb.sh`? You can instead re-run
+     `sudo ./make-usb.sh /dev/sdX` from an updated checkout.
+   - To also move to a newer Clonezilla, rebuild the stick with that
+     version, either with `make-usb.sh` or the Windows steps above.
+3. **Boot the server from the stick.** Choose **Clonezilla live**, pick
+   your language and keyboard, then **Enter_shell → cmd**, and run:
+   ```
+   sudo bash /run/live/medium/czhd/install-to-hd.sh
+   ```
+4. **Type `UPGRADE`** when it says Clonezilla is already installed. Don't
+   type `YES` or `ERASE`: those wipe the drive, images included.
+5. **Remove the stick before the server reboots.** The stick and the server
+   use the same folder layout, so with both connected the server could
+   start Clonezilla from the stick.
+6. **Check it worked.** Start **Clonezilla Lite Server** and go through the
+   wizard until it's waiting for clients. Press **Ctrl+Alt+F2**, log in as
+   `user`, and run `cat /tmp/czhd-lite-server.log`. You should see the
+   helper's changes listed (signed shim, full-duplex multicast,
+   `PART_PREPARE_TIME`, client menu timeout). Press **Ctrl+Alt+F1** to go
+   back to Lite Server.
+
 ## Notes and limits
 
 - **x86-64 only**, as is Clonezilla's amd64 build.
