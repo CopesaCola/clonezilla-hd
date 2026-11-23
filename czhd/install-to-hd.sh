@@ -60,15 +60,21 @@ EOF
 
 src_part=$(findmnt -n -o SOURCE --target "$SRC" || true)
 src_disk=
-[[ -b $src_part ]] && src_disk=/dev/$(lsblk -n -o PKNAME "$src_part" | head -n1)
+if [[ -b $src_part ]]; then
+  src_disk=$(lsblk -n -p -o PKNAME "$src_part" | head -n1)
+  # A stick formatted without a partition table is mounted as the whole disk.
+  [[ -n $src_disk ]] || src_disk=$src_part
+fi
 
 disks=()
-while read -r name type tran; do
-  [[ $type == disk && $name != "$src_disk" && $tran != usb ]] || continue
+# Skip the installer's own stick, USB drives and removable drives.
+while read -r name type tran rm; do
+  [[ $type == disk && $name != "$src_disk" && $tran != usb && $rm != 1 ]] || continue
   [[ $name == /dev/zram* || $name == /dev/loop* ]] && continue
   [[ $(blockdev --getsize64 "$name" 2>/dev/null || echo 0) -gt $((8 * 1024 ** 3)) ]] || continue
   disks+=("$name")
-done < <(lsblk -d -p -n -o NAME,TYPE,TRAN | awk '{print $1, $2, ($3 == "" ? "-" : $3)}')
+done < <(lsblk -d -p -n -P -o NAME,TYPE,TRAN,RM | sed -E 's/[A-Z]+="([^"]*)"/\1|/g' |
+  awk -F'|' '{gsub(/^ +| +$/, "", $0); for (i = 1; i <= 4; i++) { gsub(/^ +/, "", $i); if ($i == "") $i = "-" } print $1, $2, $3, $4}')
 
 [[ -n ${CZHD_DISK-} ]] || ((${#disks[@]})) || die "no internal drive (8 GB or larger, not USB) found"
 
